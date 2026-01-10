@@ -1,0 +1,144 @@
+{{define "content"}}
+<nav aria-label="breadcrumb">
+  <ul>
+    <li><a href="/" class="secondary">All Events</a></li>
+    <li>{{.EventName}}</li>
+  </ul>
+</nav>
+
+<form id="batch-delete-form" method="POST" action="/tasks/batch-delete" onsubmit="return confirm('Delete selected tasks?');"></form>
+
+<div class="grid">
+  <div>
+    <hgroup>
+      <h1>{{.EventName}}</h1>
+      <p>
+        <a href="/events/{{.EventID}}/edit" class="secondary" style="text-decoration: none;">⚙️ Edit Event Settings</a>
+      </p>
+    </hgroup>
+  </div>
+
+  <div style="display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 0.5rem;">
+    <form method="GET" style="margin-bottom: 0;">
+      <label>
+        <input type="checkbox" name="show_all" onchange="this.form.submit()" {{if .ShowAll}}checked{{end}}>
+        Show Completed
+      </label>
+    </form>
+    
+    <button type="submit" form="batch-delete-form" class="outline contrast" style="font-size: 0.8rem; padding: 4px 12px; width: auto; border-color: #d93526; color: #d93526;">
+      🗑 Delete Selected
+    </button>
+  </div>
+</div>
+
+<hr>
+
+{{range $cat, $scoredTasks := .TasksByCategory}}
+<details open style="margin-bottom: 1rem;">
+  <summary><strong>{{$cat}}</strong> <span class="badge">{{len $scoredTasks}}</span></summary>
+  <table class="striped">
+    <thead>
+      <tr>
+        <th scope="col" style="width: 50px; text-align: center;">Risk</th>
+        <th scope="col" style="width: 30px;">✓</th>
+        <th scope="col">Task</th>
+        <th scope="col" style="width: 120px;">Status</th>
+        <th scope="col" style="width: 100px;">Due</th>
+        <th scope="col" style="width: 140px;">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{range $scoredTasks}}
+      {{$t := .Task}} 
+      <tr class="{{if eq $t.Status "done"}}muted{{end}}">
+        
+        <td style="text-align: center;">
+          {{if eq $t.Status "done"}}
+            <span style="color:#ccc;">-</span>
+          {{else if eq .RiskLevel "high"}}
+             <span data-tooltip="{{range .Reasons}}{{.}}, {{end}}" style="color: #d93526; font-weight: bold;">{{.Score}}</span>
+          {{else if eq .RiskLevel "med"}}
+             <span data-tooltip="{{range .Reasons}}{{.}}, {{end}}" style="color: #e6a23c; font-weight: bold;">{{.Score}}</span>
+          {{else}}
+             <span style="color: #28a745;">{{.Score}}</span>
+          {{end}}
+        </td>
+
+        <td style="text-align: center;">
+          <input type="checkbox" name="task_ids" value="{{$t.ID}}" form="batch-delete-form">
+        </td>
+
+        <td>
+            <div style="font-weight: bold;">
+              <a href="/tasks/{{$t.ID}}/edit" style="text-decoration: none;">{{$t.Title}}</a>
+            </div>
+            
+            <div style="font-size: 0.85em; margin-top: 4px;">
+              {{if $t.AssigneeText.Valid}}
+                <span class="badge" style="background:#007bff; color:white;">👤 {{$t.AssigneeText.String}}</span>
+              {{else if $t.OwnerName.Valid}}
+                <span class="badge" style="background:#555; color:white;">👤 {{$t.OwnerName.String}}</span>
+              {{else}}
+                <span class="secondary">Unassigned</span>
+              {{end}}
+
+              {{if $t.Subtasks.Valid}}
+                 <span data-tooltip="AI Subtasks Included">🤖 Steps</span>
+              {{end}}
+
+              {{if eq $t.Priority 5}}
+                <span style="color: #d93526; margin-left: 8px;">🔥 Critical</span>
+              {{end}}
+            </div>
+        </td>
+        
+        <td>
+          {{if eq $t.Status "done"}}
+            <span style="color: #28a745;">✅ Done</span>
+          {{else if eq $t.Status "in_progress"}}
+            <span style="color: #007bff;">In Progress</span>
+          {{else}}
+            <span class="secondary">{{$t.Status}}</span>
+          {{end}}
+        </td>
+        
+        <td>
+           {{if $t.DueDate.Valid}}
+             {{$t.DueDate.Time.Format "Jan 02"}}
+           {{else}}
+             <span class="secondary">—</span>
+           {{end}}
+        </td>
+
+        <td>
+          <div role="group" style="display: flex; gap: 0.5rem;">
+            {{if ne $t.Status "in_progress"}}
+            {{if ne $t.Status "done"}}
+              <form method="POST" action="/tasks/{{$t.ID}}/update" style="margin:0;">
+                <input type="hidden" name="status" value="in_progress">
+                <button type="submit" class="outline" style="padding: 4px 8px; font-size: 0.7rem;">Start</button>
+              </form>
+            {{end}}
+            {{end}}
+            
+            {{if ne $t.Status "done"}}
+              <form method="POST" action="/tasks/{{$t.ID}}/update" style="margin:0;">
+                <input type="hidden" name="status" value="done">
+                <button type="submit" style="padding: 4px 8px; font-size: 0.7rem;">Done</button>
+              </form>
+            {{end}}
+          </div>
+        </td>
+      </tr>
+      {{end}}
+    </tbody>
+  </table>
+</details>
+{{else}}
+  <article style="text-align: center; color: #666;">
+    <p>No tasks found for this event.</p>
+    <a href="/tasks/new?event_id={{.EventID}}" role="button">Create First Task</a>
+  </article>
+{{end}}
+{{end}}

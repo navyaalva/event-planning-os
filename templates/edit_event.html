@@ -1,0 +1,39 @@
+{{define "title"}}Edit Event · Event Planning OS{{end}}
+{{define "content"}}
+
+<nav aria-label="breadcrumb">
+  <ul>
+    <li><a href="/" class="secondary">Dashboard</a></li>
+    <li><a href="/events/{{.Event.ID}}" class="secondary">{{.Event.Name}}</a></li>
+    <li>Edit Event</li>
+  </ul>
+</nav>
+
+<h1>Edit Event Settings</h1>
+
+<form method="POST" action="/events/{{.Event.ID}}/update">
+  <label>
+    Event Name
+    <input name="name" value="{{.Event.Name}}" required>
+  </label>
+
+  <div class="grid">
+    <label>
+      Event Date
+      <input type="date" name="event_date" value="{{.Event.EventDate.Format "2006-01-02"}}" required>
+    </label>
+    
+    <label>
+      Location
+      <input name="location" value="{{if .Event.Location.Valid}}{{.Event.Location.String}}{{end}}" placeholder="e.g. Convention Center">
+    </label>
+  </div>
+
+  <label>
+    Summary / Goal
+    <textarea name="summary" rows="3">{{if .Event.Summary.Valid}}{{.Event.Summary.String}}{{end}}</textarea>
+  </label>
+
+  <button type="submit">Save Changes</button>
+</form>
+{{end}}

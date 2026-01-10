@@ -1,0 +1,49 @@
+{{define "content"}}
+<hgroup>
+  <h1>Your Events</h1>
+  <p>Manage your portfolio of initiatives.</p>
+</hgroup>
+
+<section style="margin-bottom: 2rem;">
+  {{if .Briefing}}
+    <article style="border-left: 5px solid #2e7d32; background-color: #f9fdf9;">
+      {{.Briefing}}
+      <footer style="margin-top: 1rem;">
+        <a href="/" class="secondary"><small>Dismiss</small></a>
+      </footer>
+    </article>
+  {{else}}
+    <div style="background: #f0f0f0; padding: 1rem; border-radius: 8px; display: flex; align-items: center; justify-content: space-between;">
+      <span><strong>🤖 AI Lead-Pilot:</strong> Get a summary of risks across all events.</span>
+      <a role="button" href="/?briefing=true" class="outline contrast" style="background:white;">Generate Daily Briefing ✨</a>
+    </div>
+  {{end}}
+</section>
+
+<div class="grid">
+  {{range .Events}}
+  <article>
+    <header>
+      <strong>{{.Name}}</strong>
+      <br>
+      <small class="secondary">{{.Info}}</small>
+    </header>
+    
+    <div style="margin: 1rem 0;">
+      <strong>{{.Countdown}}</strong>
+    </div>
+
+    <progress value="{{.CompletedTasks}}" max="{{.TotalTasks}}"></progress>
+    <small>{{.CompletedTasks}} / {{.TotalTasks}} tasks completed</small>
+
+    <footer>
+      <a role="button" href="/events/{{.ID}}" class="outline">Manage Event →</a>
+    </footer>
+  </article>
+  {{end}}
+</div>
+
+<div style="margin-top:2rem; text-align:center;">
+  <a href="/events/new" role="button" class="contrast">➕ Start New Event</a>
+</div>
+{{end}}

@@ -1,0 +1,41 @@
+{{define "base"}}
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{block "title" .}}Event Planning OS{{end}}</title>
+  
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  
+  <style>
+    :root { --pico-font-size: 100%; --primary-color: #2e7d32; }
+    .badge { padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; color: white; background: #555; }
+    .badge.backlog { background: #6c757d; }
+    .badge.in_progress { background: #007bff; }
+    .badge.blocked { background: #dc3545; }
+    .badge.done { background: #28a745; }
+    .nav-brand { font-weight: 900; letter-spacing: -0.5px; font-size: 1.5rem; }
+  </style>
+</head>
+<body>
+  <header class="container">
+    <nav>
+      <ul><li><a href="/" class="nav-brand">Event Planning OS</a></li></ul>
+      <ul>
+        <li><a href="/" class="secondary">Dashboard</a></li>
+        <li><a role="button" href="/tasks/new">New Task +</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="container">
+    {{block "content" .}}{{end}}
+  </main>
+
+  <footer class="container">
+    <small class="secondary">Event Planning OS · 2026</small>
+  </footer>
+</body>
+</html>
+{{end}}

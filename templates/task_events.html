@@ -1,0 +1,31 @@
+{{define "title"}}Audit Log · Event Planning OS{{end}}
+{{define "content"}}
+
+<nav aria-label="breadcrumb">
+  <ul>
+    <li><a href="/tasks" class="secondary">← Back to Dashboard</a></li>
+    <li>Audit Log</li>
+  </ul>
+</nav>
+
+<hgroup>
+  <h1>Task History</h1>
+  <p>Immutable ledger of all state changes.</p>
+</hgroup>
+
+{{if .Events}}
+  <ul class="timeline">
+    {{range .Events}}
+      <li class="timeline-item">
+        <strong>{{.EventType}}</strong>
+        <small class="secondary" style="margin-left: 10px;">{{.CreatedAt}}</small>
+        
+        <pre style="margin-top: 0.5rem; background: #f8f9fa; border: 1px solid #eee;"><code>{{.Changes}}</code></pre>
+      </li>
+    {{end}}
+  </ul>
+{{else}}
+  <p><em>No events recorded for this task yet.</em></p>
+{{end}}
+
+{{end}}

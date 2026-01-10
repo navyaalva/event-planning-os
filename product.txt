@@ -1,0 +1,111 @@
+# Product Requirements Document: SBF-OS
+# Project: Small Business Fair Operating System (SBF-OS)
+# Owner: VP of Growth, NC State Consult Your Community
+# Status: MVP / In-Development
+# Version: 1.0
+
+--------------------------------------------------------------------------------
+1. PROBLEM STATEMENT
+--------------------------------------------------------------------------------
+Managing the 2026 Small Business Fair (2,000+ attendees, 90+ vendors) requires 
+tracking hundreds of asynchronous tasks across a volunteer team. The current 
+manual process leads to:
+
+1. Operational Blindness: High-risk tasks (e.g., "Vendor A contract unsigned") 
+   go unnoticed until the deadline.
+2. Staleness: Tasks are delegated but not followed up on, leading to "silent failures."
+3. Context Switching: The leadership team spends 40% of time just figuring out 
+   *what* to do next rather than doing it.
+
+--------------------------------------------------------------------------------
+2. STRATEGIC GOAL
+--------------------------------------------------------------------------------
+Build a centralized **internal operating system** that enforces accountability 
+and algorithmic prioritization.
+
+* North Star Metric: Reduce "Stale Tasks" (no update in >7 days) by 40%.
+* Secondary Metric: Reduce "Time to Triage" for new issues from 3 days to <4 hours.
+
+--------------------------------------------------------------------------------
+3. USER PERSONAS
+--------------------------------------------------------------------------------
+* Primary (The Sentinel): The VP/Project Lead. Needs a "God Mode" view of all 
+  risks and bottlenecks.
+* Secondary (The Operator): A Team Lead (Logistics, Sponsorship). Needs a 
+  clutter-free list of "What do I need to do *today*?"
+
+--------------------------------------------------------------------------------
+4. FEATURE SCOPE (MVP)
+--------------------------------------------------------------------------------
+
+4.1. The "Pulse" Dashboard
+   User Story: As a Lead, I want to see a ranked list of tasks so I work on the 
+   most urgent items first.
+   
+   Implementation:
+   * Algorithmic Sorting: Tasks are sorted by a calculated `RiskScore`.
+   * Scoring Logic (Source: internal/logic/insights.go):
+     - Overdue: +50 points
+     - Due in 3 Days: +30 points
+     - Stale (>7 days no touch): +20 points
+     - Blocked Status: +20 points
+
+4.2. Event Sourcing Lite (The Audit Trail)
+   User Story: As a VP, I want to know exactly *when* a vendor status changed 
+   and *who* changed it, so I can debug communication breakdowns.
+   
+   Implementation:
+   * Immutable Logs: Every state change writes a row to the `task_events` table.
+   * JSON Diffing (Source: internal/logic/diff.go): The system computes the 
+     delta (e.g., status changed from "backlog" to "done") and stores it as 
+     JSONB for future replay.
+
+4.3. Atomic Delegation
+   User Story: As a Lead, I want to assign a task to a specific owner with zero 
+   risk of data loss.
+   
+   Implementation:
+   * Transactional Integrity: All updates occur within a `RunTx` closure. If 
+     the Audit Log fails to write, the Task Update rolls back.
+
+--------------------------------------------------------------------------------
+5. TECHNICAL ARCHITECTURE
+--------------------------------------------------------------------------------
+
+5.1. The Stack
+   * Language: Go (Golang) - For strict typing and performance.
+   * Database: PostgreSQL - Required for JSONB support and ACID transactions.
+   * ORM: sqlc - Compiles SQL to Go to prevent runtime errors.
+   * Migrations: Goose - Version-controlled schema changes.
+   * Frontend: Go Templates - Server-Side Rendering (SSR) for instant load times.
+
+5.2. Data Model
+   * `people`: Volunteers and staff.
+   * `tasks`: Core unit of work (includes status, priority, owner_id).
+   * `task_events`: History ledger with ON DELETE CASCADE integrity.
+
+--------------------------------------------------------------------------------
+6. ROADMAP
+--------------------------------------------------------------------------------
+
+Phase 1: The "Skeleton" (Completed)
+[x] Database Schema & Migrations (Postgres/Goose)
+[x] Type-Safe Query Layer (sqlc)
+[x] Core REST API (Chi Router)
+[x] Basic Event Sourcing (Audit Logs)
+
+Phase 2: The "Operator" (Current Focus)
+[ ] Test Harness: Integration tests for the Data Layer.
+[ ] UI Polish: Replace plain HTML strings with `html/template`.
+[ ] Entity Linking: Add "Assign Person" dropdowns to the Task interface.
+
+Phase 3: The "Intelligence" (Future)
+[ ] AI Lead-Pilot: LLM integration to summarize event logs into daily reports.
+[ ] Staleness Alerts: Background cron worker flagging tasks untouched >14 days.
+
+--------------------------------------------------------------------------------
+7. RISKS & MITIGATION
+--------------------------------------------------------------------------------
+* Data Loss: Mitigated by ACID transactions (`RunTx`) ensuring atomic updates.
+* Performance: Pagination will be added to `GetActiveTasks` once tasks > 1,000.
+* Adoption: UI must be faster than Notion/Excel. Focus on "One-Click" updates.

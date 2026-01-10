@@ -1,0 +1,129 @@
+{{define "title"}}Edit Task · Event Planning OS{{end}}
+{{define "content"}}
+
+<nav aria-label="breadcrumb">
+  <ul>
+    <li><a href="/events/{{.Task.EventID}}" class="secondary">← Back to Event</a></li>
+    <li>Edit Task</li>
+  </ul>
+</nav>
+
+<h1>Edit Task</h1>
+
+<form method="POST" action="/tasks/{{.Task.ID}}/update">
+  <div class="grid">
+    <label>
+      Task Title
+      <input name="title" value="{{.Task.Title}}" required>
+    </label>
+    
+    <label>
+      Category
+      <select name="category" required>
+        <option value="logistics" {{if eq .Task.Category "logistics"}}selected{{end}}>🚛 Logistics</option>
+        <option value="vendors" {{if eq .Task.Category "vendors"}}selected{{end}}>🏪 Vendors</option>
+        <option value="marketing" {{if eq .Task.Category "marketing"}}selected{{end}}>📣 Marketing</option>
+        <option value="finance" {{if eq .Task.Category "finance"}}selected{{end}}>💰 Finance</option>
+        <option value="general" {{if eq .Task.Category "general"}}selected{{end}}>📂 General</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="grid">
+    <label>
+      Priority
+      <select name="priority">
+        <option value="3" {{if eq .Task.Priority 3}}selected{{end}}>Medium</option>
+        <option value="5" {{if eq .Task.Priority 5}}selected{{end}}>🔥 Critical</option>
+        <option value="4" {{if eq .Task.Priority 4}}selected{{end}}>High</option>
+        <option value="2" {{if eq .Task.Priority 2}}selected{{end}}>Low</option>
+      </select>
+    </label>
+
+    <label>
+      Assignee (Text)
+      <input type="text" name="assignee_text" list="people_list" 
+             value="{{if .Task.AssigneeText.Valid}}{{.Task.AssigneeText.String}}{{end}}">
+      <datalist id="people_list">
+        {{range .People}}
+          <option value="{{.Name}}">
+        {{end}}
+      </datalist>
+    </label>
+  </div>
+
+  <label>
+    Due Date
+    <input type="date" name="due_date" 
+           value="{{if .Task.DueDate.Valid}}{{.Task.DueDate.Time.Format "2006-01-02"}}{{end}}">
+  </label>
+
+  <label>
+    Description
+    <textarea name="description" rows="5">{{if .Task.Description.Valid}}{{.Task.Description.String}}{{end}}</textarea>
+  </label>
+
+  <article style="background: #f9f9f9; margin-top: 1rem; border-left: 4px solid #007bff; padding: 1.5rem;">
+    <header style="margin-bottom: 1rem;">
+      <strong>✅ Breakdown / Subtasks</strong>
+      <p style="font-size: 0.8rem; color: #666; margin: 0;">Use the AI suggestions below or add your own.</p>
+    </header>
+    
+    <div id="subtask-list">
+      {{range $i, $s := .Subtasks}}
+      <div class="grid" style="align-items: center; grid-template-columns: 30px 1fr auto; margin-bottom: 10px;">
+        <input type="checkbox" name="subtask_done_{{$i}}" {{if .IsDone}}checked{{end}} style="margin: 0;">
+        <input type="text" name="subtask_title" value="{{.Title}}" style="margin-bottom: 0;">
+        <button type="button" class="outline contrast" style="border: none; color: #999;" onclick="this.parentElement.remove()">✕</button>
+      </div>
+      {{end}}
+    </div>
+
+    <div class="grid">
+      <button type="button" class="secondary outline" onclick="addStep()" style="width: auto;">+ Add Step</button>
+      
+      <button type="submit" name="action" value="generate_ai" class="outline contrast" style="width: auto; background-color: white;">
+        ✨ Auto-Breakdown
+      </button>
+    </div>
+  </article>
+
+  <div class="grid">
+    <button type="submit">Save Changes</button>
+    
+    {{if .GCalLink}}
+      <a role="button" href="{{.GCalLink}}" target="_blank" class="contrast outline" style="background-color: white;">
+        📅 Add to Google Calendar
+      </a>
+    {{end}}
+    
+    <a href="/tasks/{{.Task.ID}}/events" role="button" class="secondary outline">View History</a>
+  </div>
+</form>
+
+<hr style="margin-top: 3rem;">
+<div style="text-align: right;">
+  <form method="POST" action="/tasks/{{.Task.ID}}/delete" onsubmit="return confirm('Are you sure you want to delete this task?');">
+    <button type="submit" class="outline" style="color: red; border-color: red;">🗑 Delete Task</button>
+  </form>
+</div>
+
+<script>
+function addStep() {
+  const container = document.getElementById('subtask-list');
+  const count = container.children.length; // Use current count for index
+  
+  const div = document.createElement('div');
+  div.className = 'grid';
+  div.style = 'align-items: center; grid-template-columns: 30px 1fr auto; margin-bottom: 10px;';
+  
+  div.innerHTML = `
+    <input type="checkbox" name="subtask_done_${count}" style="margin: 0;">
+    <input type="text" name="subtask_title" placeholder="New step..." style="margin-bottom: 0;" autofocus>
+    <button type="button" class="outline contrast" style="border: none; color: #999;" onclick="this.parentElement.remove()">✕</button>
+  `;
+  container.appendChild(div);
+}
+</script>
+
+{{end}}

@@ -1,0 +1,103 @@
+{{define "title"}}New Task · Event Planning OS{{end}}
+{{define "content"}}
+
+<nav aria-label="breadcrumb">
+  <ul>
+    {{if .EventID}}
+      <li><a href="/events/{{.EventID}}" class="secondary">← Back to Event</a></li>
+    {{else}}
+      <li><a href="/" class="secondary">← Back to Dashboard</a></li>
+    {{end}}
+    <li>New Task</li>
+  </ul>
+</nav>
+
+<h1>Create Task</h1>
+
+<form method="POST" action="/tasks/new">
+
+  {{if .EventID}}
+    <input type="hidden" name="event_id" value="{{.EventID}}">
+  {{else}}
+    <label>
+      <strong>Select Event</strong>
+      <select name="event_id" required autofocus>
+        <option value="" disabled selected>Choose an Event...</option>
+        {{range .Events}}
+          <option value="{{.ID}}">{{.Name}}</option>
+        {{end}}
+      </select>
+    </label>
+    <hr style="margin: 1.5rem 0;">
+  {{end}}
+
+  <div class="grid">
+    <label>
+      Task Title
+      <input name="title" placeholder="e.g. Call Tent Rental Company" required>
+    </label>
+    
+    <label>
+      Category
+      <select name="category" required>
+        <option value="" disabled selected>Select Category...</option>
+        <option value="logistics">🚛 Logistics</option>
+        <option value="vendors">🏪 Vendors</option>
+        <option value="marketing">📣 Marketing</option>
+        <option value="finance">💰 Finance</option>
+        <option value="general">📂 General</option>
+      </select>
+    </label>
+  </div>
+  
+  <div class="grid">
+    <label>
+      Priority
+      <select name="priority">
+        <option value="3" selected>Medium (Normal)</option>
+        <option value="5">🔥 Critical</option>
+        <option value="4">High</option>
+        <option value="2">Low</option>
+        <option value="1">Backlog</option>
+      </select>
+    </label>
+
+    <label>
+      Assign To (Text)
+      <input type="text" name="assignee_text" placeholder="e.g. Sarah, Vendor A, Catering Co." list="people_list">
+      <datalist id="people_list">
+        {{range .People}}
+          <option value="{{.Name}}">
+        {{end}}
+      </datalist>
+      <small>AI will use this name to generate follow-up reminders.</small>
+    </label>
+  </div>
+
+  <label>
+    Due Date
+    <input type="date" name="due_date">
+  </label>
+
+  <details>
+    <summary role="button" class="secondary outline">Add Details (Description)</summary>
+    <label style="margin-top: 1rem;">
+      Description / Context
+      <textarea name="description" rows="4" placeholder="Paste emails, links, or context here..."></textarea>
+    </label>
+  </details>
+
+  <fieldset style="margin-top: 1rem; border: 1px solid #eee; padding: 1rem; border-radius: 8px;">
+    <legend>🤖 AI Assistance</legend>
+    <label>
+      <input type="checkbox" name="use_ai" value="true">
+      <strong>Generate Subtasks?</strong>
+      <br>
+      <small class="secondary">Check this to have AI break this task into steps automatically.</small>
+    </label>
+  </fieldset>
+
+  <button type="submit" style="margin-top: 1rem;">Create Task</button>
+</form>
+
+{{end}}
