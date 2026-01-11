@@ -137,16 +137,4 @@ Interested in contributing to **SBF-OS**? We'd love your help! Here's how you ca
 
 ---
 
-## 📜 License
-
-This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
-
----
-
-## 🌐 Code of Conduct
-
-Please read the [Code of Conduct](CODE_OF_CONDUCT.md) to understand expected behavior while contributing or interacting with this project.
-
----
-
 Built with ❤️ by [Navya Alva](https://github.com/navyaalva) and contributors.
