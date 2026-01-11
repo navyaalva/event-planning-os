@@ -13,6 +13,11 @@ import (
 	"github.com/navyaalva/sbf-os/internal/db"
 )
 
+// HTTP client with timeout for external API calls
+var httpClient = &http.Client{
+	Timeout: 30 * time.Second,
+}
+
 // Subtask structure for JSON
 type Subtask struct {
 	Title  string `json:"title"`
@@ -75,7 +80,7 @@ func GenerateSubtasks(taskTitle, description string) []byte {
 
 	// UPDATED MODEL: gemini-2.5-flash
 	url := "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + apiKey
-	resp, err := http.Post(url, "application/json", bytes.NewBuffer(reqBody))
+	resp, err := httpClient.Post(url, "application/json", bytes.NewBuffer(reqBody))
 	if err != nil {
 		fmt.Println("❌ AI Network Error:", err)
 		return generateSimulatedSubtasks(taskTitle)

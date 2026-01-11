@@ -1,0 +1,28 @@
+{{define "content"}}
+<hgroup>
+  <h1>Create New Event</h1>
+  <p>Set up a new event to manage tasks.</p>
+</hgroup>
+
+<form method="POST">
+  <label for="name">Event Name</label>
+  <input type="text" id="name" name="name" required>
+
+  <label for="event_date">Event Date</label>
+  <input type="date" id="event_date" name="event_date" required>
+
+  {{if .Templates}}
+  <label for="template_id">Apply Template (Optional)</label>
+  <select id="template_id" name="template_id">
+    <option value="">-- No Template --</option>
+    {{range .Templates}}
+    <option value="{{.ID}}">{{.Name}}</option>
+    {{end}}
+  </select>
+  {{end}}
+
+  <button type="submit">Create Event</button>
+</form>
+
+<p><a href="/" class="secondary">← Back to Dashboard</a></p>
+{{end}}

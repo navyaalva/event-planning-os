@@ -2,13 +2,14 @@ package server
 
 import (
 	"database/sql"
-	"encoding/json" // <--- ADDED
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"math"
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -37,7 +38,7 @@ func (s *Server) handleDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var displayEvents []EventDisplay
+	displayEvents := make([]EventDisplay, 0, len(events))
 	now := time.Now()
 
 	for _, e := range events {
@@ -70,12 +71,15 @@ func (s *Server) handleDashboard(w http.ResponseWriter, r *http.Request) {
 		if err == nil {
 			reminders := logic.CheckFollowUps(tasks)
 			if len(reminders) > 0 {
-				html := "<strong>🔔 Suggested Follow-ups:</strong><ul>"
-				for _, r := range reminders {
-					html += "<li>" + r + "</li>"
+				var sb strings.Builder
+				sb.WriteString("<strong>🔔 Suggested Follow-ups:</strong><ul>")
+				for _, rem := range reminders {
+					sb.WriteString("<li>")
+					sb.WriteString(rem)
+					sb.WriteString("</li>")
 				}
-				html += "</ul>"
-				briefingHTML = template.HTML(html)
+				sb.WriteString("</ul>")
+				briefingHTML = template.HTML(sb.String())
 			} else {
 				briefingHTML = template.HTML("✅ No urgent follow-ups needed.")
 			}
@@ -90,9 +94,9 @@ func (s *Server) handleDashboard(w http.ResponseWriter, r *http.Request) {
 		Briefing: briefingHTML,
 	}
 
-	tmpl, err := template.ParseFiles("templates/base.layout.html", "templates/dashboard.html")
-	if err != nil {
-		http.Error(w, "Template parse error: "+err.Error(), http.StatusInternalServerError)
+	tmpl := s.templates["dashboard"]
+	if tmpl == nil {
+		http.Error(w, "Template not found", http.StatusInternalServerError)
 		return
 	}
 	tmpl.ExecuteTemplate(w, "base", data)
@@ -140,9 +144,9 @@ func (s *Server) handleEventDetail(w http.ResponseWriter, r *http.Request) {
 		data.EventName = event.Name
 	}
 
-	tmpl, err := template.ParseFiles("templates/base.layout.html", "templates/list_tasks.html")
-	if err != nil {
-		http.Error(w, "Template parse error: "+err.Error(), http.StatusInternalServerError)
+	tmpl := s.templates["list_tasks"]
+	if tmpl == nil {
+		http.Error(w, "Template not found", http.StatusInternalServerError)
 		return
 	}
 	tmpl.ExecuteTemplate(w, "base", data)
@@ -157,9 +161,9 @@ func (s *Server) handleCreateTask(w http.ResponseWriter, r *http.Request) {
 		events, _ := s.Q.ListEvents(r.Context())
 		people, _ := s.Q.ListPeople(r.Context())
 
-		tmpl, err := template.ParseFiles("templates/base.layout.html", "templates/create_task.html")
-		if err != nil {
-			http.Error(w, "Template parse error: "+err.Error(), http.StatusInternalServerError)
+		tmpl := s.templates["create_task"]
+		if tmpl == nil {
+			http.Error(w, "Template not found", http.StatusInternalServerError)
 			return
 		}
 
@@ -301,9 +305,9 @@ func (s *Server) handleEditTask(w http.ResponseWriter, r *http.Request) {
 	}
 	// ------------------------------------------
 
-	tmpl, err := template.ParseFiles("templates/base.layout.html", "templates/edit_task.html")
-	if err != nil {
-		http.Error(w, err.Error(), 500)
+	tmpl := s.templates["edit_task"]
+	if tmpl == nil {
+		http.Error(w, "Template not found", 500)
 		return
 	}
 
@@ -486,7 +490,7 @@ func (s *Server) handleTaskEvents(w http.ResponseWriter, r *http.Request) {
 		CreatedAt string
 		Changes   string
 	}
-	var eventViews []EventView
+	eventViews := make([]EventView, 0, len(events))
 	for _, e := range events {
 		eventViews = append(eventViews, EventView{
 			EventType: e.EventType,
@@ -494,7 +498,11 @@ func (s *Server) handleTaskEvents(w http.ResponseWriter, r *http.Request) {
 			Changes:   string(e.Changes),
 		})
 	}
-	tmpl, _ := template.ParseFiles("templates/base.layout.html", "templates/task_events.html")
+	tmpl := s.templates["task_events"]
+	if tmpl == nil {
+		http.Error(w, "Template not found", http.StatusInternalServerError)
+		return
+	}
 	tmpl.ExecuteTemplate(w, "base", struct{ Events []EventView }{Events: eventViews})
 }
 
@@ -517,7 +525,11 @@ func (s *Server) handleCreateEvent(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
 		templates, _ := s.Q.ListTemplates(r.Context())
 		data := struct{ Templates []db.Template }{Templates: templates}
-		tmpl, _ := template.ParseFiles("templates/base.layout.html", "templates/create_event.html")
+		tmpl := s.templates["create_event"]
+		if tmpl == nil {
+			http.Error(w, "Template not found", http.StatusInternalServerError)
+			return
+		}
 		tmpl.ExecuteTemplate(w, "base", data)
 		return
 	}
@@ -566,7 +578,11 @@ func (s *Server) handleEditEvent(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Event not found", 404)
 		return
 	}
-	tmpl, _ := template.ParseFiles("templates/base.layout.html", "templates/edit_event.html")
+	tmpl := s.templates["edit_event"]
+	if tmpl == nil {
+		http.Error(w, "Template not found", http.StatusInternalServerError)
+		return
+	}
 	tmpl.ExecuteTemplate(w, "base", struct{ Event db.Event }{Event: event})
 }
 
@@ -621,7 +637,7 @@ func (s *Server) handleBatchDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	idStrings := r.Form["task_ids"]
-	var ids []uuid.UUID
+	ids := make([]uuid.UUID, 0, len(idStrings))
 	for _, idStr := range idStrings {
 		if uid, err := uuid.Parse(idStr); err == nil {
 			ids = append(ids, uid)
