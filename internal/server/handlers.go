@@ -499,9 +499,11 @@ func (s *Server) handleTaskEvents(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 	tmpl := s.templates["task_events"]
-	if tmpl != nil {
-		tmpl.ExecuteTemplate(w, "base", struct{ Events []EventView }{Events: eventViews})
+	if tmpl == nil {
+		http.Error(w, "Template not found", http.StatusInternalServerError)
+		return
 	}
+	tmpl.ExecuteTemplate(w, "base", struct{ Events []EventView }{Events: eventViews})
 }
 
 // 7) DELETE TASK
@@ -524,9 +526,11 @@ func (s *Server) handleCreateEvent(w http.ResponseWriter, r *http.Request) {
 		templates, _ := s.Q.ListTemplates(r.Context())
 		data := struct{ Templates []db.Template }{Templates: templates}
 		tmpl := s.templates["create_event"]
-		if tmpl != nil {
-			tmpl.ExecuteTemplate(w, "base", data)
+		if tmpl == nil {
+			http.Error(w, "Template not found", http.StatusInternalServerError)
+			return
 		}
+		tmpl.ExecuteTemplate(w, "base", data)
 		return
 	}
 	name := r.FormValue("name")
@@ -575,9 +579,11 @@ func (s *Server) handleEditEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	tmpl := s.templates["edit_event"]
-	if tmpl != nil {
-		tmpl.ExecuteTemplate(w, "base", struct{ Event db.Event }{Event: event})
+	if tmpl == nil {
+		http.Error(w, "Template not found", http.StatusInternalServerError)
+		return
 	}
+	tmpl.ExecuteTemplate(w, "base", struct{ Event db.Event }{Event: event})
 }
 
 // 10) UPDATE EVENT

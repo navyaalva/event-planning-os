@@ -45,8 +45,7 @@ func (s *Server) loadTemplates() {
 	for _, page := range pages {
 		tmpl, err := template.ParseFiles(baseLayout, "templates/"+page+".html")
 		if err != nil {
-			log.Printf("Warning: failed to parse template %s: %v", page, err)
-			continue
+			log.Fatalf("Failed to parse required template %s: %v", page, err)
 		}
 		s.templates[page] = tmpl
 	}
