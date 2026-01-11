@@ -23,6 +23,12 @@ func main() {
 	}
 	defer dbConn.Close()
 
+	// Configure connection pool for better performance
+	dbConn.SetMaxOpenConns(25)
+	dbConn.SetMaxIdleConns(10)
+	dbConn.SetConnMaxLifetime(5 * time.Minute)
+	dbConn.SetConnMaxIdleTime(1 * time.Minute)
+
 	// --- NEW: Session Manager Setup ---
 	sessionManager := scs.New()
 	sessionManager.Lifetime = 24 * time.Hour
